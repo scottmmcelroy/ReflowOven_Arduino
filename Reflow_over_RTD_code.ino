@@ -14,10 +14,13 @@ Adafruit_MAX31865 thermo = Adafruit_MAX31865(CS, spiMOSI, spiMISO, spiCLK);
 #define RNOMINAL 100.0 //nominal value for the PT100 at 0°C
 float rtd = 0;
 #define TEMPERATURE_MATCH 29 //28C
+float temperature_profile = 0;
 //***********************
-//Initialize the tiemr
+//Initialize the timer
 ESP32Timer ITimer0(0); //start a class of ITimer0
 int read_flag = 0;
+int time_count = 0;
+int arrayPosition = 0;
 #define TIMER0_INTERVAL_MS        1000000 //1 second interval
 //*************************
 //*****Timer ISR Handler***
@@ -35,12 +38,6 @@ float timeInterval[] = {0, 90, 180, 210, 240, 270};
 //************************
 void setup() {
   int i = 0;
-  float timeInterval_temp1 = 0;
-  float timeInterval_temp2 = 0;
-  float timeInterval_temp3 = 0;
-  float timeInterval_temp4 = 0;
-  float timeInterval_temp5 = 0;
-
   // put your setup code here, to run once:
   Serial.begin(115200);
 
@@ -49,7 +46,7 @@ void setup() {
 
   //delay for the filling of the array
   delay(10000);
-  
+
   //debug: check if the array filled properly
   Serial.println("***************************************");
   for(i=0; i<270; i++){
@@ -61,7 +58,7 @@ void setup() {
   }
   Serial.println("***************************************");
 
-  Serial.println("test!!!");
+  //Serial.println("test!!!");
   //Pin set for LED
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
@@ -71,10 +68,14 @@ void setup() {
   //setup the max31865 as 3 wire
   //thermo.begin(MAX31865_3WIRE);
   //pinMode(TEST, OUTPUT);
+  
+  //turn on the 1 second timer interrupt
   ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS, TimerHandler0); 
 } 	
 
-//************************
+//*****************************************************
+//***************Loop***********
+//*****************************************************
 void loop() {
   // put your main code here, to run repeatedly:
   
@@ -82,21 +83,51 @@ void loop() {
   if(read_flag == 1){
     //read the temperature
     read_flag = 0;
+    
+    //move the position and time count except for the first one
+    if(time_count == 0){
+      time_count++;
+      arrayPosition = 0;
+    }else{
+      //update each position count
+      time_count++;
+      arrayPosition++;
+    }
+
+    if(arrayPosition >= 270){
+      //terminate program if the entire cycle is complete
+      while(1);
+    }
+
+    //Serial.print("time_count = ");
+    //Serial.println(time_count);
+    //Serial.print("arrayPosition = ");
+    //Serial.println(arrayPosition);    
+    
     //read the rtd temp
     //rtd = thermo.temperature(RNOMINAL, RREF);
-    Serial.print("Temperature = "); Serial.println(rtd);
-
+    Serial.print("RTD Temperature Reading = "); 
+    Serial.println(rtd);
+    
+    temperature_profile = reflowData[arrayPosition];
+    Serial.print("temperature_profile = ");
+    Serial.println(temperature_profile);
     //Comparing temperature value with the RTD read
-    if(rtd >= (TEMPERATURE_MATCH+1) ){
+    if(rtd >= (temperature_profile+1) ){
       //turn off switch
       digitalWrite(LED, LOW);
-    }else if(rtd <= (TEMPERATURE_MATCH-1) ){
+      Serial.println("Switch-off");
+    }else if(rtd <= (temperature_profile-1) ){
       //turn on switch
       digitalWrite(LED, HIGH);
+      Serial.println("Switch-on");
+
     }
   }//end read flag
 
 }//end of loop
+
+
 
 
 //*************************************************************************
