@@ -121,8 +121,9 @@ void loop() {
       //turn on switch
       digitalWrite(LED, HIGH);
       Serial.println("Switch-on");
-
     }
+
+    Serial.println("  ");
   }//end read flag
 
 }//end of loop
