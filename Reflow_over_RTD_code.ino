@@ -98,6 +98,10 @@ void loop() {
 
 }//end of loop
 
+
+//*************************************************************************
+//***********Functions******************
+//*************************************************************************
 //function calculates the time interval vs temp slope for each interval
 //requires a global array timeIntervals and TempIntervals
 float timeIntervalCount(int arrayItemNumber){
@@ -147,3 +151,8 @@ bool reflowDataArrayFill(int numberOfItems){
 
   return true;
 }
+
+
+//*******************************************************************************
+//*********************End of file******************
+//*******************************************************************************
