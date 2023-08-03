@@ -35,11 +35,21 @@ float timeInterval[] = {0, 90, 180, 210, 240, 270};
 //************************
 void setup() {
   int i = 0;
+  float timeInterval_temp1 = 0;
+  float timeInterval_temp2 = 0;
+  float timeInterval_temp3 = 0;
+  float timeInterval_temp4 = 0;
+  float timeInterval_temp5 = 0;
+
   // put your setup code here, to run once:
   Serial.begin(115200);
 
   //reflowData array fill based on inputs
   reflowDataArrayFill(numberOfItems);
+
+  //delay for the filling of the array
+  delay(10000);
+  
   //debug: check if the array filled properly
   Serial.println("***************************************");
   for(i=0; i<270; i++){
@@ -51,10 +61,10 @@ void setup() {
   }
   Serial.println("***************************************");
 
+  Serial.println("test!!!");
   //Pin set for LED
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
-
   //debug
   //while(1);
 
@@ -95,10 +105,17 @@ float timeIntervalCount(int arrayItemNumber){
   float tempIntervalStep = 0;
   float result = 0;
   //calculate the number of steps 
-  timeIntervalStep = (timeInterval[arrayItemNumber] - timeInterval[arrayItemNumber - 1]);
-  tempIntervalStep = (tempInterval[arrayItemNumber] - tempInterval[arrayItemNumber - 1]);
+  //timeIntervalStep = (timeInterval[arrayItemNumber] - timeInterval[arrayItemNumber - 1]);
+  timeIntervalStep = (timeInterval[arrayItemNumber] - timeInterval[ (arrayItemNumber-1) ]);
+  //tempIntervalStep = (tempInterval[arrayItemNumber] - tempInterval[arrayItemNumber - 1]);
+  tempIntervalStep = (tempInterval[arrayItemNumber] - tempInterval[ (arrayItemNumber-1) ] );
+  Serial.print("timeIntervalStep = ");
+  Serial.println(timeIntervalStep);
+  Serial.print("tempIntervalStep = ");
+  Serial.println(tempIntervalStep);
   //result temperature step per second
-  result = tempIntervalStep / timeIntervalStep;
+  result = (tempIntervalStep / timeIntervalStep);
+  return result;
 }//end of timeIntervalCount
 
 //fill the complete array to be used for comparison
@@ -106,13 +123,13 @@ float timeIntervalCount(int arrayItemNumber){
 void arrayFill(int arrayItemNumber, float tempIntervalStep){
   int i = 0;
   //loop to fill the array for the interval in the data array
-  for(i=timeInterval[arrayItemNumber - 1]; i<timeInterval[arrayItemNumber]; i++){
+  for(i=timeInterval[ (arrayItemNumber - 1) ]; i<(timeInterval[arrayItemNumber]); i++){
     //fill the next interval with the previous + the temperature step
     if(i==0){
       //start the first value at 25C
       reflowData[i] = 25;
     }else{
-      reflowData[i] = reflowData[i-1] + tempIntervalStep;
+      reflowData[i] = (reflowData[i-1] + tempIntervalStep);
     }
   }
 }//end of arrayFill
@@ -122,9 +139,11 @@ bool reflowDataArrayFill(int numberOfItems){
   float arrayItemNumber = 1;
   float stepVal = 0;
   //fill the complete array
-  for(arrayItemNumber = 1 ; arrayItemNumber<=numberOfItems; arrayItemNumber++){
+  for(arrayItemNumber=1 ; arrayItemNumber<=numberOfItems; arrayItemNumber++){
     //calculate stepInterval
     stepVal = timeIntervalCount(arrayItemNumber);
     arrayFill(arrayItemNumber, stepVal);
   }
+
+  return true;
 }
