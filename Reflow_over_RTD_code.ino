@@ -66,7 +66,7 @@ void setup() {
   //while(1);
 
   //setup the max31865 as 3 wire
-  //thermo.begin(MAX31865_3WIRE);
+  thermo.begin(MAX31865_3WIRE);
   //pinMode(TEST, OUTPUT);
   
   //turn on the 1 second timer interrupt
@@ -94,18 +94,14 @@ void loop() {
       arrayPosition++;
     }
 
+    //program trap
     if(arrayPosition >= 270){
       //terminate program if the entire cycle is complete
       while(1);
     }
-
-    //Serial.print("time_count = ");
-    //Serial.println(time_count);
-    //Serial.print("arrayPosition = ");
-    //Serial.println(arrayPosition);    
     
     //read the rtd temp
-    //rtd = thermo.temperature(RNOMINAL, RREF);
+    rtd = thermo.temperature(RNOMINAL, RREF);
     Serial.print("RTD Temperature Reading = "); 
     Serial.println(rtd);
     
