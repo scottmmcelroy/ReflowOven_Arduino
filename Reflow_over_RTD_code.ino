@@ -3,7 +3,9 @@
 #include <ESP32_C3_ISR_Timer.hpp>
 #include <Adafruit_MAX31865.h>
 
-int LED = D0; //external LED connection
+int TOP_HEATER = D0; //Top Heater connection
+int BOTTOM_HEATER = D1; //Bottom Heater connection 
+int BUTTON = D2; //button press for resest
 //******MAX31865 inits***********
 int CS = D7;
 int spiMOSI = D10;
@@ -60,10 +62,15 @@ void setup() {
 
   //Serial.println("test!!!");
   //Pin set for LED
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
-  //debug
-  //while(1);
+  pinMode(TOP_HEATER, OUTPUT);
+  pinMode(BOTTOM_HEATER, OUTPUT);
+  digitalWrite(TOP_HEATER, LOW);
+  digitalWrite(BOTTOM_HEATER, LOW);
+  //button press for the resst
+  pinMode(BUTTON, INPUT);
+
+  //wait for button to be triggered
+  //while(digitalRead(BUTTON));
 
   //setup the max31865 as 3 wire
   thermo.begin(MAX31865_3WIRE);
@@ -78,7 +85,8 @@ void setup() {
 //*****************************************************
 void loop() {
   // put your main code here, to run repeatedly:
-  
+  int buttonVal = HIGH;
+
   //if the read_flag is triggered, read RTD
   if(read_flag == 1){
     //read the temperature
@@ -97,8 +105,20 @@ void loop() {
     //program trap
     if(arrayPosition >= 270){
       //terminate program if the entire cycle is complete
-      while(1);
-    }
+      //while(1);
+      //input a button press to reset everything
+      while(buttonVal == HIGH){
+        //If a button is press, break out of the loop
+        buttonVal = digitalRead(BUTTON);
+        //if the button was pressed and goes low, reset everything
+        if(buttonVal == LOW){
+          //reset positional values
+          arrayPosition = 0;
+          time_count = 0;
+          //reload the reflowArrays - future if new reflow is needed
+        }
+      }
+    }//arrayPosition is at max value
     
     //read the rtd temp
     rtd = thermo.temperature(RNOMINAL, RREF);
@@ -111,12 +131,18 @@ void loop() {
     //Comparing temperature value with the RTD read
     if(rtd >= (temperature_profile+1) ){
       //turn off switch
-      digitalWrite(LED, LOW);
+      digitalWrite(TOP_HEATER, LOW);
+      digitalWrite(BOTTOM_HEATER, LOW);
       Serial.println("Switch-off");
+      //test
+      Serial.println(digitalRead(BUTTON));
     }else if(rtd <= (temperature_profile-1) ){
       //turn on switch
-      digitalWrite(LED, HIGH);
+      digitalWrite(TOP_HEATER, HIGH);
+      digitalWrite(BOTTOM_HEATER, HIGH);
       Serial.println("Switch-on");
+      //test
+      Serial.println(digitalRead(BUTTON));
     }
 
     Serial.println("  ");
