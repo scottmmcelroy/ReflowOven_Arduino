@@ -70,7 +70,8 @@ void setup() {
   pinMode(BUTTON, INPUT);
 
   //wait for button to be triggered
-  //while(digitalRead(BUTTON));
+  Serial.println("Waiting for button press");
+  while(digitalRead(BUTTON));
 
   //setup the max31865 as 3 wire
   thermo.begin(MAX31865_3WIRE);
@@ -105,11 +106,17 @@ void loop() {
     //program trap
     if(arrayPosition >= 270){
       //terminate program if the entire cycle is complete
-      //while(1);
+      digitalWrite(TOP_HEATER, LOW);
+      digitalWrite(BOTTOM_HEATER, LOW);
+      Serial.println("Cycle Complete");
+      Serial.println("Waiting for button press to restart");
       //input a button press to reset everything
       while(buttonVal == HIGH){
         //If a button is press, break out of the loop
         buttonVal = digitalRead(BUTTON);
+        //read the rtd temperature so that the user know the oven temp while cooling down
+        readRTD();
+        Serial.println("*********");
         //if the button was pressed and goes low, reset everything
         if(buttonVal == LOW){
           //reset positional values
@@ -121,9 +128,7 @@ void loop() {
     }//arrayPosition is at max value
     
     //read the rtd temp
-    rtd = thermo.temperature(RNOMINAL, RREF);
-    Serial.print("RTD Temperature Reading = "); 
-    Serial.println(rtd);
+    rtd = readRTD();
     
     temperature_profile = reflowData[arrayPosition];
     Serial.print("temperature_profile = ");
@@ -206,6 +211,15 @@ bool reflowDataArrayFill(int numberOfItems){
   return true;
 }
 
+//read the temp sensor function
+float readRTD(void){
+  float rtd_local = 0.0;
+  rtd_local = thermo.temperature(RNOMINAL, RREF);
+  Serial.print("RTD Temperature Reading = "); 
+  Serial.println(rtd_local);
+
+  return rtd_local;
+}
 
 //*******************************************************************************
 //*********************End of file******************
