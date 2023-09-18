@@ -5,7 +5,7 @@
 
 int TOP_HEATER = D0; //Top Heater connection
 int BOTTOM_HEATER = D1; //Bottom Heater connection 
-int BUTTON = D2; //button press for resest
+int BUTTON = D2; //button press for reset
 //******MAX31865 inits***********
 int CS = D7;
 int spiMOSI = D10;
@@ -30,6 +30,17 @@ bool IRAM_ATTR TimerHandler0(void * timerNo){
   //at the timer interrupt interval, trigger read
   read_flag = 1;
 }
+
+//*************************
+//*******kill switch*******
+int KILL_SWITCH = D3; //kill switch
+int killSwitchStatus = 0;
+//*******Kill Switch interrupt
+void killSwitchISR(void){
+  //reset all variables and reset
+  killSwitchStatus = LOW;
+}
+
 //*************************
 #define reflowDataMax 270 //270 elements
 float reflowData[reflowDataMax];
@@ -66,8 +77,11 @@ void setup() {
   pinMode(BOTTOM_HEATER, OUTPUT);
   digitalWrite(TOP_HEATER, LOW);
   digitalWrite(BOTTOM_HEATER, LOW);
-  //button press for the resst
+  //button press for the reset
   pinMode(BUTTON, INPUT);
+  //kill switch interrupt
+  pinMode(KILL_SWITCH, INPUT);
+  attachInterrupt(digitPinToInterrupt(KILL_SWITCH), killSwitchISR, LOW);
 
   //wait for button to be triggered
   Serial.println("Waiting for button press");
@@ -88,6 +102,13 @@ void loop() {
   // put your main code here, to run repeatedly:
   int buttonVal = HIGH;
 
+  //if the kill switch is trigger jump to program trap
+  if(killSwitchStatus == 0){
+    //set the array position to run into the trap
+    arrayPosition = 300;
+    Serial.println("Kill Switch Engaged...completing program");
+  }
+
   //if the read_flag is triggered, read RTD
   if(read_flag == 1){
     //read the temperature
@@ -103,7 +124,9 @@ void loop() {
       arrayPosition++;
     }
 
-    //program trap
+    //********************
+    //****program trap****
+    //********************
     if(arrayPosition >= 270){
       //terminate program if the entire cycle is complete
       digitalWrite(TOP_HEATER, LOW);
