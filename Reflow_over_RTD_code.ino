@@ -34,7 +34,7 @@ bool IRAM_ATTR TimerHandler0(void * timerNo){
 //*************************
 //*******kill switch*******
 int KILL_SWITCH = D3; //kill switch
-int killSwitchStatus = 0;
+int killSwitchStatus = HIGH;
 //*******Kill Switch interrupt
 void killSwitchISR(void){
   //reset all variables and reset
@@ -79,10 +79,11 @@ void setup() {
   digitalWrite(BOTTOM_HEATER, LOW);
   //button press for the reset
   pinMode(BUTTON, INPUT);
-  //kill switch interrupt
-  pinMode(KILL_SWITCH, INPUT);
-  attachInterrupt(digitPinToInterrupt(KILL_SWITCH), killSwitchISR, LOW);
 
+  //kill switch
+  pinMode(KILL_SWITCH, INPUT_PULLUP);
+  killSwitchStatus = digitalRead(KILL_SWITCH);
+  
   //wait for button to be triggered
   Serial.println("Waiting for button press");
   while(digitalRead(BUTTON));
@@ -93,6 +94,9 @@ void setup() {
   
   //turn on the 1 second timer interrupt
   ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS, TimerHandler0); 
+
+  //kill switch interrupt
+  attachInterrupt(digitalPinToInterrupt(KILL_SWITCH), killSwitchISR, FALLING);
 } 	
 
 //*****************************************************
@@ -107,6 +111,7 @@ void loop() {
     //set the array position to run into the trap
     arrayPosition = 300;
     Serial.println("Kill Switch Engaged...completing program");
+    //while(1);
   }
 
   //if the read_flag is triggered, read RTD
@@ -146,6 +151,9 @@ void loop() {
           arrayPosition = 0;
           time_count = 0;
           //reload the reflowArrays - future if new reflow is needed
+          
+          //reset the kill switch
+          killSwitchStatus = HIGH;
         }
       }
     }//arrayPosition is at max value
