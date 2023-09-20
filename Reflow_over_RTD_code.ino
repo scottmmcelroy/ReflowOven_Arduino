@@ -6,6 +6,10 @@
 int TOP_HEATER = D0; //Top Heater connection
 int BOTTOM_HEATER = D1; //Bottom Heater connection 
 int BUTTON = D2; //button press for reset
+#define YES 1
+#define NO 0
+int oven_ready = NO;
+float setPoint = 50;
 //******MAX31865 inits***********
 int CS = D7;
 int spiMOSI = D10;
@@ -46,7 +50,7 @@ void killSwitchISR(void){
 float reflowData[reflowDataMax];
 //reflow data
 int numberOfItems = 5;
-float tempInterval[] = {25, 150, 175, 217, 249, 217};
+float tempInterval[] = {50, 150, 175, 217, 249, 217};
 float timeInterval[] = {0, 90, 180, 210, 240, 270};
 //************************
 void setup() {
@@ -114,8 +118,20 @@ void loop() {
     //while(1);
   }
 
+  //get the oven pre-heated
+  if(read_flag == 1 && oven_ready == NO){
+    Serial.println("Checking setup temperature");
+    read_flag = 0;
+    //read the rtd temp
+    rtd = readRTD();
+    //run until the temperature in the oven is 50C
+    if(rtd >= setPoint){
+      oven_ready = YES;
+    }
+  }
+
   //if the read_flag is triggered, read RTD
-  if(read_flag == 1){
+  if(read_flag == 1 && oven_ready == YES){
     //read the temperature
     read_flag = 0;
     
@@ -150,6 +166,8 @@ void loop() {
           //reset positional values
           arrayPosition = 0;
           time_count = 0;
+          //turn the oven ready back to off to reset the prep step
+          oven_ready = NO;
           //reload the reflowArrays - future if new reflow is needed
           
           //reset the kill switch
